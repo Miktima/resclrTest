@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"regexp"
-	"strings"
 )
 
 func getHash(filename, url string) {
@@ -51,9 +50,8 @@ func getHash(filename, url string) {
 func main() {
 	// initial values
 	type initPar struct {
-		URLPage     string
-		CDN         string
-		InitGitPath string
+		URLPage string
+		CDN     string
 	}
 	var readFile string
 	var ipar initPar
@@ -64,8 +62,6 @@ func main() {
 		fmt.Scanln(&ipar.URLPage)
 		fmt.Printf("CDN on the page: ")
 		fmt.Scanln(&ipar.CDN)
-		fmt.Printf("PATH to htdocs of a project: ")
-		fmt.Scanln(&ipar.InitGitPath)
 	} else {
 		// Open our jsonFile
 		byteValue, err := os.ReadFile("conf.json")
@@ -74,14 +70,12 @@ func main() {
 			fmt.Println(err)
 		}
 		// defer the closing of our jsonFile so that we can parse it later on
-		// var iparS []initPar
 		err = json.Unmarshal(byteValue, &ipar)
 		if err != nil {
 			fmt.Println(err)
 		}
 		fmt.Println("Page URL to check css and js resources: ", ipar.URLPage)
 		fmt.Println("CDN on the page: ", ipar.CDN)
-		fmt.Println("PATH to htdocs of a project: ", ipar.InitGitPath)
 	}
 	// Send an HTTP GET request to the urlPage web page
 	resp, err := http.Get(ipar.URLPage)
@@ -91,7 +85,7 @@ func main() {
 	}
 	defer resp.Body.Close()
 	// find all matched links
-	re := regexp.MustCompile(`(https://` + ipar.CDN + `[\w/.:]*(css|js))`)
+	re := regexp.MustCompile(`(https://` + ipar.CDN + `[\w/.:]*(webp|jpg))`)
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println("Error:", err)
@@ -101,15 +95,14 @@ func main() {
 	links := re.FindAllString(content, -1)
 	// loops through the links slice and find corresponded files in git
 	// Check if paths must be changed (for windows)
-	changePath := strings.Count(ipar.InitGitPath, "\\")
+	reCdn := regexp.MustCompile(`//cdn[\w*].img`)
 	for _, l := range links {
-		reFile := regexp.MustCompile(`https://` + ipar.CDN + `(/[\w/.:]*(css|js))`)
-		paths := reFile.FindStringSubmatch(l)
-		file := paths[len(paths)-2]
-		if changePath > 0 {
-			file = strings.ReplaceAll(file, "/", "\\")
-		}
-		go getHash(ipar.InitGitPath+file, l)
+		lWoutCdn := reCdn.ReplaceAllString(l, "//img")
+		fmt.Println(lWoutCdn)
+		// reFile := regexp.MustCompile(`https://` + ipar.CDN + `(/[\w/.:]*(css|js))`)
+		// paths := reFile.FindStringSubmatch(l)
+		// file := paths[len(paths)-2]
+		// go getHash(file, l)
 	}
 	var input string
 	fmt.Scanln(&input)
