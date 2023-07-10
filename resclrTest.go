@@ -3,47 +3,24 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"hash/crc32"
 	"io"
 	"net/http"
 	"os"
 	"regexp"
 )
 
-func getHash(filename, url string) {
-	var hFileSum32 chan uint32 = make(chan uint32)
-	var hURLSum32 chan uint32 = make(chan uint32)
-	go func() {
-		bs, err := os.ReadFile(filename)
-		if err != nil {
-			return
-		}
-		hFile := crc32.NewIEEE()
-		hFile.Write(bs)
-		hFileSum32 <- hFile.Sum32()
-	}()
-	h1 := <-hFileSum32
-	go func() {
-		resp, err := http.Get(url)
-		if err != nil {
-			return
-		}
-		defer resp.Body.Close()
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return
-		}
-		hUrl := crc32.NewIEEE()
-		hUrl.Write(body)
-		hURLSum32 <- hUrl.Sum32()
-	}()
-	h2 := <-hURLSum32
-	ver := h1 == h2
-	switch ver {
-	case true:
-		fmt.Println(filename, h1, h2, ver)
-	case false:
-		fmt.Println(filename, h1, h2, ver, "!!!!!!!")
+func checkStatus(url string) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		fmt.Print("\n")
+		fmt.Println("Link: ", url, " | Status:", resp.Status, "!!!!!!")
+	} else {
+		fmt.Print(".")
 	}
 }
 
@@ -93,16 +70,15 @@ func main() {
 	}
 	content := string(body)
 	links := re.FindAllString(content, -1)
-	// loops through the links slice and find corresponded files in git
-	// Check if paths must be changed (for windows)
-	reCdn := regexp.MustCompile(`//cdn[\w*].img`)
+	// loops through the links slice to check get status
+	// increase number of requests by 10
+	for i := 0; i < 10; i++ {
+		for _, l := range links {
+			go checkStatus(l)
+		}
+	}
 	for _, l := range links {
-		lWoutCdn := reCdn.ReplaceAllString(l, "//img")
-		fmt.Println(lWoutCdn)
-		// reFile := regexp.MustCompile(`https://` + ipar.CDN + `(/[\w/.:]*(css|js))`)
-		// paths := reFile.FindStringSubmatch(l)
-		// file := paths[len(paths)-2]
-		// go getHash(file, l)
+		go checkStatus(l)
 	}
 	var input string
 	fmt.Scanln(&input)
