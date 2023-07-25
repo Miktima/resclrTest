@@ -51,7 +51,7 @@ func main() {
 		if err != nil {
 			fmt.Println(err)
 		}
-		fmt.Println("Page URL to check css and js resources: ", ipar.URLPage)
+		fmt.Println("Page URL to test jpeg images: ", ipar.URLPage)
 		fmt.Println("CDN on the page: ", ipar.CDN)
 	}
 	// Send an HTTP GET request to the urlPage web page
