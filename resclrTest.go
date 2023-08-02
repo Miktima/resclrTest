@@ -35,7 +35,7 @@ func main() {
 	fmt.Printf("Read from configuration file (conf.json)? (Y/n)")
 	fmt.Scanln(&readFile)
 	if readFile == "n" || readFile == "N" {
-		fmt.Printf("Page URL to check css and js resources: ")
+		fmt.Printf("Page URL to check jpeg images: ")
 		fmt.Scanln(&ipar.URLPage)
 		fmt.Printf("CDN on the page: ")
 		fmt.Scanln(&ipar.CDN)
