@@ -77,9 +77,6 @@ func main() {
 			go checkStatus(l)
 		}
 	}
-	for _, l := range links {
-		go checkStatus(l)
-	}
 	var input string
 	fmt.Scanln(&input)
 }
